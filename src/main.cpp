@@ -1,125 +1,76 @@
 //#include "RRP2Console64.h"
 #include <iostream>
+// #include <vector>
 #include <string>
-#include <vector>
-#include "RRP2.h"
-#include "JDevTools.h"
+#include "RRP2/RRP2.h"
+#include "jdevtools/jdevjsons.h"
+#include "nlohmann/json.hpp"
 
-//
-//int main() {
-//	int pc;
-//	RRP2Console64 gamemanager;
-//	while (true)
-//	{
-//		std::string test1 = "2s5s6s1s1s1s1s1s1s1s1s1s0s1s1s1s1s1s1s1s1s1s1s1s25s0s0s16s2s0s1s2s0s0s1s0s0s3s2s1s0s0s0s0s0s0s0s0s1s1s0s0s0s0s0s5s0s1s0s0s1s0s0s2s0s1";
-//		try
-//		{
-//			//std::cout << "\n\nhow many players will be?(max 16): ";
-//			//std::cin >> pc;
-//		}
-//		catch (const std::exception&)
-//		{
-//			pc = 2;
-//		}
-//		gamemanager.run_inconsole(0, true, test1);
-//	}
-//
-//	return 0;
-//}
+
+// int main() {
+// 	std:: cout << jdevtools::rando(1000, 0, 1) << std::endl;
+// 	std:: cout << jdevtools::rando(1000, 0, 2) << std::endl;
+// 	std:: cout << jdevtools::rando(1000, 0) << std::endl;
+// 	std:: cout << jdevtools::rando(1000, 0) << std::endl;
+// 	return 0;
+// }
+
 
 extern "C" {
-	static RRP2 game1 = RRP2(" ");
-	static bool was_loaded = false;
+	static RRP2 game1 = RRP2("");
+
+	const char* creategame(const char* s_config, int isconfig) {
+		nlohmann::json j_config = nlohmann::json::parse(jdevtools::base64urlDecode(s_config));
+		RRP2::RRP2config r_config;
+
+		try {
+			r_config.player_max = j_config["data"]["player_max"];
+			if (r_config.player_max < 2) r_config.player_max = 2;
+			else if (r_config.player_max > 31) r_config.player_max = 31;
+
+			for (int i = 0; i < RRP2std::cdatal; i++) {
+				std::string key1 = RRP2std::getEnumName("cdatai", i);
+				if (j_config["data"].contains(key1)) r_config.data[i] = j_config["data"][key1];
+			}
+
+			for (int i = 0; i < RRP2std::cardl; i++) {
+				std::string key1 = RRP2std::getEnumName("cardi", i);
+				if (j_config["card"].contains(key1)) r_config.card_freq[i] = j_config["card"][key1];
+			}
+		}
+		catch(const std::exception&) {
+			r_config = RRP2::RRP2config();
+		}
+		
+		game1.start_new_game(r_config);
+		return game1.save_game(isconfig).data();
+	}
 
 	void loadgame(const char* data) {
 		game1 = RRP2(data);
-		was_loaded = true;
 	}
 
-	const char* savegame() {
-		if (was_loaded) return game1.save_game().data();
-		else return "-";
+	const char* savegame(int isconfig) {
+		return game1.save_game(isconfig).data();
 	}
 
 	const char* getconfig() {
-		if (was_loaded) return game1.get_config_string().data();
-		return "-";
+		return game1.get_config().data();
 	}
-
-	const char* getgeneral() {
-		std::string response = "-";
-
-		if (was_loaded) {
-			response = "pturn=" + std::to_string(game1.get_pturn());
-			response += "&dturn=" + std::to_string(game1.get_dturn());
-			response += "&events=" + std::to_string(game1.get_events());
-			response += "&cinterface=" + std::to_string(game1.get_cinterface());
-		}
-
-		return response.data();
-	}
-
+	
 	int getpmax() {
-		if (was_loaded) return game1.get_pmax();
-		else return 0;
+		return game1.get_pmax();
 	}
 
-	const char* getplayer(int index) {
-		if (was_loaded) return game1.get_player_string(index).data();
-		else return "-";
+	// const char* getplayer(int index) {
+	// 	return game1.get_player(index).data();
+	// }
+
+	int gameio(int input) {
+		return game1.gameio(input);
 	}
 
-	int gameio(const char* sinput) {
-		if (was_loaded) {
-			int input = 0;
-
-			try
-			{
-				input = std::stoi(sinput);
-			}
-			catch (const std::exception&)
-			{
-				input = -1;
-			}
-
-			return game1.gameio(input);
-		}
-		else return -3;
-	}
-
-	//const char* getdelimetr() {
-	//	return "" + RRP2std::delimetr;
-	//}
-
-	const char* creategame(int pmax, const char* cdata, const char* cardf) {
-		RRP2::RRP2config config;
-		std::vector<std::string> vcdata = JDevTools::split(cdata, RRP2std::delimetr);
-		std::vector<std::string> vcardf = JDevTools::split(cardf, RRP2std::delimetr);
-
-		if (vcardf.size() == RRP2std::cardsl && vcdata.size() == RRP2std::cdatal) {
-			try
-			{
-				if (pmax < 2) pmax = 2;
-				else if (pmax > 31) pmax = 31;
-				config.player_max = pmax;
-
-				for (int i = 0; i < vcdata.size(); i++)
-				{
-					config.data[i] = std::stoi(vcdata[i]);
-				}
-				for (int i = 0; i < vcardf.size(); i++)
-				{
-					config.card_freq[i] = std::stoi(vcardf[i]);
-				}
-			}
-			catch (const std::exception&)
-			{
-				config = RRP2::RRP2config();
-			}
-		}
-
-		game1.start_new_game(config);
-		was_loaded = true;
-		return game1.save_game().data();
+	const char* createjwt(const char* key, const char* data) {
+		return jdevtools::createJWT(key, data).data();
 	}
 }

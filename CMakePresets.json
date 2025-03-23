@@ -1,0 +1,39 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "msvc1",
+            "displayName": "VS 2022 - Release",
+            "description": "Using compilers for Visual Studio 17 2022 (x64 architecture)",
+            "generator": "Visual Studio 17 2022",
+            "toolset": "host=x64",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe"
+            }
+        },
+        {
+            "name": "wasm1",
+            "displayName": "WASM - Release",
+            "description": "Sets Ninja generator, also requires emscripten",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            },
+            "toolchainFile": "C:\\emsdk\\upstream\\emscripten\\cmake\\Modules\\Platform\\Emscripten.cmake"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "msvc1-release",
+            "displayName": "VS 2022 - Release - amd64",
+            "configurePreset": "msvc1",
+            "configuration": "Release"
+        }
+    ]
+}
